@@ -1,5 +1,5 @@
 
-name: Node.js CI Pipeline
+name: Node.js CI/CD Pipeline
 
 on:
   push:
@@ -28,3 +28,17 @@ jobs:
 
       - name: Test application startup
         run: timeout 5s npm start || test $? -eq 124
+
+  deploy:
+    name: Deploy to AWS EC2
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+
+    steps:
+      - name: Update application on EC2
+        run: |
+          cd /home/ubuntu/nodejs-cicd-project
+          git pull --ff-only origin main
+          npm ci
+          pm2 restart nodejs-cicd-app
